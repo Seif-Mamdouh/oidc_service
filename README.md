@@ -11,8 +11,8 @@
 - fn `validate_github_token`: does the actual work of validating the token, including checking its format, decoding it, and verifying its signature.
 - fn `fetch_jwks`: fetches the JSON Web Key Set (JWKS) from GitHub's OIDC provider, which is used for validating tokens in a production environment.
 - `HttpServer` (inside of main fn) : This sets up an Actix web server running on `localhost:3000` with two routes: 
-                                                                                                  a GET "/" for a simple hello message, 
-                                                                                                  a POST `/token` for token validation.
+  - a GET "/" for a simple hello message.
+  - a POST `/token` for token validation.
 
 
  ## Use case Scanrio
