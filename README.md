@@ -20,8 +20,14 @@
  - This token can then be sent to our system for validation. 
  - Our system verifies the token and returns the decoded claims if it's valid.
 
-## Testing
+## Test Plan
 - Clone repo
 - run `cargo watch -x run`
-- https://jwt.io/#debugger-io?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJuYW1lIjoiU2VpZiIsImlhdCI6MTUxNjIzOTAyMn0.Gm6ToPj0vZvlrlSVYZuFx0WetYbWlycX0Ia5QxPSoRY
-- 
+- run
+  -   ```
+      curl -X POST -H "Content-Type: application/json" -d '{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJuYW1lIjoiU2VpZiIsImlhdCI6MTUxNjIzOTAyMn0.Gm6ToPj0vZvlrlSVYZuFx0WetYbWlycX0Ia5QxPSoRY"}' http://localhost:3000/token
+      ```
+
+
+I got my JWT test token from: https://jwt.io/#debugger-io?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJuYW1lIjoiU2VpZiIsImlhdCI6MTUxNjIzOTAyMn0.Gm6ToPj0vZvlrlSVYZuFx0WetYbWlycX0Ia5QxPSoRY
+  - this where you can customize this payload
