@@ -63,13 +63,13 @@ async fn validate_github_token(
         DecodingKey::from_rsa_components(modulus, exponent)
             .map_err(|e| eyre!("Failed to create decoding key: {}", e))?
     } else {
-        // For testing, use a fixed secret
+        // For testing we use a fixed secret
         DecodingKey::from_secret("your_secret_key".as_ref())
     };
 
     let mut validation = Validation::new(Algorithm::HS256);
     validation.validate_exp = false; // Disable expiration validation for testing
-    validation.required_spec_claims.clear(); // Clear all required claims for testing
+    validation.required_spec_claims.clear(); // disable all required claims
 
     let token_data = decode::<GitHubClaims>(token, &decoding_key, &validation)
         .map_err(|e| eyre!("Failed to decode token: {}", e))?;
