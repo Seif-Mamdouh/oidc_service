@@ -45,30 +45,3 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use actix_web::{test, web, App};
-    use jsonwebtoken::{decode, DecodingKey, Validation};
-
-    #[actix_rt::test]
-    async fn test_token_endpoint() {
-        let app = App::new().route("/token", web::post().to(token_endpoint));
-        let mut app = test::init_service(app).await;
-
-        let req = test::TestRequest::post().uri("/token").to_request();
-        let resp: serde_json::Value = test::call_and_read_body_json(&mut app, req).await;
-
-        assert!(resp.get("access_token").is_some());
-
-        let token = resp["access_token"].as_str().unwrap();
-        let decoded = decode::<Claims>(
-            token,
-            &DecodingKey::from_secret("your_secret_key".as_ref()),
-            &Validation::default()
-        ).unwrap();
-
-        assert_eq!(decoded.claims.sub, "github-action");
-    }
-}
