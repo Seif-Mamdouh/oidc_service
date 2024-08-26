@@ -1,0 +1,28 @@
+name: Get JWT
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get_jwt:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Get JWT
+        id: get_token
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const token = await core.getIDToken()
+            console.log(token)
+            core.setOutput('token', token)
+
+      - name: Use JWT
+        run: |
+          echo "JWT: ${{ steps.get_token.outputs.token }}"
+          # Here you would typically send this token to your service
+          # curl -X POST http://your-service-url/token \
+          #      -H "Content-Type: application/json" \
+          #      -d '{"token": "${{ steps.get_token.outputs.token }}"}'
