@@ -27,7 +27,11 @@
   -   ```
       curl -X POST -H "Content-Type: application/json" -d '{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJuYW1lIjoiU2VpZiIsImlhdCI6MTUxNjIzOTAyMn0.Gm6ToPj0vZvlrlSVYZuFx0WetYbWlycX0Ia5QxPSoRY"}' http://localhost:3000/token
       ```
+## Expected Ouput:
+
+```
+{"sub":"123","name":"Seif","iat":1516239022}
+```
 
 
-I got my JWT test token from: https://jwt.io/#debugger-io?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJuYW1lIjoiU2VpZiIsImlhdCI6MTUxNjIzOTAyMn0.Gm6ToPj0vZvlrlSVYZuFx0WetYbWlycX0Ia5QxPSoRY
-  - this where you can customize this payload
+I got my JWT test token from: https://jwt.io/#debugger-io?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJuYW1lIjoiU2VpZiIsImlhdCI6MTUxNjIzOTAyMn0.Gm6ToPj0vZvlrlSVYZuFx0WetYbWlycX0Ia5QxPSoRYs
