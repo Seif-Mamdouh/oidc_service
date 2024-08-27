@@ -65,12 +65,10 @@ async fn validate_github_token(
         DecodingKey::from_rsa_components(modulus, exponent)
             .map_err(|e| eyre!("Failed to create decoding key: {}", e))?
     } else {
-        // For testing purposes, you might want to allow a fallback
-        // In production, you would typically return an error here
         DecodingKey::from_secret("your_secret_key".as_ref())
     };
 
-    let mut validation = Validation::new(Algorithm::RS256); // Changed to RS256
+    let mut validation = Validation::new(Algorithm::RS256); 
     validation.validate_exp = false; // Disable expiration validation for testing
     validation.required_spec_claims.clear(); // disable all required claims
 

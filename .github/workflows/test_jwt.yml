@@ -20,8 +20,8 @@ jobs:
 
       - name: Print JWT
         run: |
-          echo "JWT Token:"
-          echo "${{ steps.get_token.outputs.token }}"
+          echo "${{ steps.get_token.outputs.token }}" > jwt_token.txt
+          echo "JWT Token saved to jwt_token.txt"
           
           echo "Decoded JWT:"
           jwtd() {
@@ -31,3 +31,9 @@ jobs:
             fi
           }
           jwtd "${{ steps.get_token.outputs.token }}"
+
+      - name: Upload JWT Token
+        uses: actions/upload-artifact@v2
+        with:
+          name: jwt-token
+          path: jwt_token.txt
