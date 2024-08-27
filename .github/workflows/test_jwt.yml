@@ -1,10 +1,10 @@
-name: Test OIDC Token
+name: Get and Print JWT
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-oidc:
+  get-jwt:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -15,38 +15,19 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const token = process.env['ACTIONS_RUNTIME_TOKEN']
-            const runtimeUrl = process.env['ACTIONS_ID_TOKEN_REQUEST_URL']
-            core.setOutput('TOKEN', token.trim())
-            core.setOutput('IDTOKENURL', runtimeUrl.trim())
+            const token = await core.getIDToken()
+            core.setOutput('token', token)
 
-      - name: Fetch and Decode JWT
-        id: fetch_jwt
+      - name: Print JWT
         run: |
-          IDTOKEN=$(curl -H "Authorization: bearer ${{steps.get_token.outputs.TOKEN}}" ${{steps.get_token.outputs.IDTOKENURL}} -H "Accept: application/json; api-version=2.0" -H "Content-Type: application/json" -d "{}" | jq -r '.value')
-          echo "IDTOKEN=${IDTOKEN}" >> $GITHUB_OUTPUT
+          echo "JWT Token:"
+          echo "${{ steps.get_token.outputs.token }}"
           
+          echo "Decoded JWT:"
           jwtd() {
             if [[ -x $(command -v jq) ]]; then
               jq -R 'split(".") | .[0],.[1] | @base64d | fromjson' <<< "${1}"
               echo "Signature: $(echo "${1}" | awk -F'.' '{print $3}')"
             fi
           }
-          
-          echo "Decoded JWT:"
-          jwtd $IDTOKEN
-
-      - name: Send Token to OIDC Service
-        env:
-          OIDC_SERVICE_URL: ${{ secrets.OIDC_SERVICE_URL }}
-        run: |
-          RESPONSE=$(curl -s -X POST $OIDC_SERVICE_URL \
-            -H "Content-Type: application/json" \
-            -d "{\"token\": \"${{ steps.fetch_jwt.outputs.IDTOKEN }}\"}")
-          echo "OIDC Service Response: $RESPONSE"
-          if [[ $RESPONSE == *"Invalid token"* ]]; then
-            echo "Token validation failed"
-            exit 1
-          else
-            echo "Token validated successfully"
-          fi
+          jwtd "${{ steps.get_token.outputs.token }}"
