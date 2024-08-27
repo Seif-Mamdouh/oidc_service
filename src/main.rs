@@ -10,7 +10,9 @@ use color_eyre::eyre::{Result, eyre};
 #[derive(Debug, Serialize, Deserialize)]
 struct GitHubClaims {
     sub: String,
-    name: String,
+    repository: String,
+    repository_owner: String,
+    job_workflow_ref: String,
     iat: u64,
 }
 
@@ -63,18 +65,33 @@ async fn validate_github_token(
         DecodingKey::from_rsa_components(modulus, exponent)
             .map_err(|e| eyre!("Failed to create decoding key: {}", e))?
     } else {
-        // For testing, use a fixed secret
-        DecodingKey::from_secret("your_secret_key".as_ref())
+        return Err(eyre!("No 'kid' found in token header"));
     };
 
-    let mut validation = Validation::new(Algorithm::HS256);
+    let mut validation = Validation::new(Algorithm::RS256);
     validation.validate_exp = false; // Disable expiration validation for testing
-    validation.required_spec_claims.clear(); // Clear all required claims for testing
+    validation.required_spec_claims.clear(); // disable all required claims
 
     let token_data = decode::<GitHubClaims>(token, &decoding_key, &validation)
         .map_err(|e| eyre!("Failed to decode token: {}", e))?;
 
-    Ok(token_data.claims)
+    let claims = token_data.claims;
+
+    // Check if GITHUB_ORG is set and validate
+    if let Ok(org) = std::env::var("GITHUB_ORG") {
+        if claims.repository_owner != org {
+            return Err(eyre!("Token is not from the expected organization"));
+        }
+    }
+
+    // Check if GITHUB_REPO is set and validate
+    if let Ok(repo) = std::env::var("GITHUB_REPO") {
+        if claims.repository != repo {
+            return Err(eyre!("Token is not from the expected repository"));
+        }
+    }
+
+    Ok(claims)
 }
 
 async fn fetch_jwks(oidc_url: &str) -> Result<Value> {
@@ -96,6 +113,14 @@ async fn main() -> Result<()> {
     let jwks = Arc::new(RwLock::new(
         fetch_jwks(github_oidc_url).await?
     ));
+
+    // Read and log the GITHUB_ORG and GITHUB_REPO environment variables
+    if let Ok(org) = std::env::var("GITHUB_ORG") {
+        println!("GITHUB_ORG set to: {}", org);
+    }
+    if let Ok(repo) = std::env::var("GITHUB_REPO") {
+        println!("GITHUB_REPO set to: {}", repo);
+    }
 
     println!("Starting OIDC server...");
     HttpServer::new(move || {

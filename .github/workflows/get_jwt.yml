@@ -1,10 +1,10 @@
-name: Get JWT
+name: Get and Validate JWT
 
 on:
   workflow_dispatch:
 
 jobs:
-  get_jwt:
+  get_and_validate_jwt:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -19,10 +19,18 @@ jobs:
             console.log(token)
             core.setOutput('token', token)
 
-      - name: Use JWT
+      - name: Validate JWT
+        env:
+          OIDC_SERVICE_URL: "http://your-oidc-service-url:3000/token"
         run: |
-          echo "JWT: ${{ steps.get_token.outputs.token }}"
-          # Here you would typically send this token to your service
-          # curl -X POST http://your-service-url/token \
-          #      -H "Content-Type: application/json" \
-          #      -d '{"token": "${{ steps.get_token.outputs.token }}"}'
+          TOKEN="${{ steps.get_token.outputs.token }}"
+          RESPONSE=$(curl -s -X POST $OIDC_SERVICE_URL \
+            -H "Content-Type: application/json" \
+            -d "{\"token\": \"$TOKEN\"}")
+          echo "OIDC Service Response: $RESPONSE"
+          if [[ $RESPONSE == *"Invalid token"* ]]; then
+            echo "Token validation failed"
+            exit 1
+          else
+            echo "Token validated successfully"
+          fi
