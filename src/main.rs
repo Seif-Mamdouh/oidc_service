@@ -1,11 +1,11 @@
-use actix_web::{web, App, HttpServer, Responder, HttpResponse};
+use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use color_eyre::eyre::{eyre, Result};
+use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use reqwest;
-use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use color_eyre::eyre::{Result, eyre};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct GitHubClaims {
@@ -38,19 +38,20 @@ async fn token_endpoint(
     }
 }
 
-async fn validate_github_token(
-    token: &str,
-    jwks: Arc<RwLock<Value>>,
-) -> Result<GitHubClaims> {
+async fn validate_github_token(token: &str, jwks: Arc<RwLock<Value>>) -> Result<GitHubClaims> {
     if !token.starts_with("eyJ") {
         return Err(eyre!("Invalid token format. Expected a JWT."));
     }
 
     let jwks = jwks.read().await;
-    
-    let header = jsonwebtoken::decode_header(token)
-        .map_err(|e| eyre!("Failed to decode header: {}. Make sure you're using a valid JWT, not a PAT.", e))?;
-    
+
+    let header = jsonwebtoken::decode_header(token).map_err(|e| {
+        eyre!(
+            "Failed to decode header: {}. Make sure you're using a valid JWT, not a PAT.",
+            e
+        )
+    })?;
+
     let decoding_key = if let Some(kid) = header.kid {
         let key = jwks["keys"]
             .as_array()
@@ -69,7 +70,7 @@ async fn validate_github_token(
     };
 
     let mut validation = Validation::new(Algorithm::RS256);
-    
+
     validation.set_audience(&["https://github.com/Seif-Mamdouh"]);
 
     let token_data = decode::<GitHubClaims>(token, &decoding_key, &validation)
@@ -77,14 +78,12 @@ async fn validate_github_token(
 
     let claims = token_data.claims;
 
-    
     if let Ok(org) = std::env::var("GITHUB_ORG") {
         if claims.repository_owner != org {
             return Err(eyre!("Token is not from the expected organization"));
         }
     }
 
-    
     if let Ok(repo) = std::env::var("GITHUB_REPO") {
         if claims.repository != repo {
             return Err(eyre!("Token is not from the expected repository"));
@@ -110,9 +109,7 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     let github_oidc_url = "https://token.actions.githubusercontent.com";
-    let jwks = Arc::new(RwLock::new(
-        fetch_jwks(github_oidc_url).await?
-    ));
+    let jwks = Arc::new(RwLock::new(fetch_jwks(github_oidc_url).await?));
 
     if let Ok(org) = std::env::var("GITHUB_ORG") {
         println!("GITHUB_ORG set to: {}", org);
@@ -124,9 +121,7 @@ async fn main() -> Result<()> {
     println!("Starting OIDC server...");
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(AppState {
-                jwks: jwks.clone(),
-            }))
+            .app_data(web::Data::new(AppState { jwks: jwks.clone() }))
             .route("/", web::get().to(hello))
             .route("/token", web::post().to(token_endpoint))
     })
