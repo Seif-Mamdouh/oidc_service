@@ -5,3 +5,5 @@ dockerfilePath = "Dockerfile"
 [deploy]
 startCommand = "./target/release/oidc-service"
 restartPolicyType = "on_failure"
+healthcheckPath = "/health"
+healthcheckTimeout = 100

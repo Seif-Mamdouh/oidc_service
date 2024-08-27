@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use std::env;
+use log::{info, error};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct GitHubClaims {
@@ -104,30 +106,26 @@ async fn hello() -> impl Responder {
     "Hello, OIDC!"
 }
 
+async fn health_check() -> HttpResponse {
+    HttpResponse::Ok().body("OK")
+}
+
 #[actix_web::main]
-async fn main() -> Result<()> {
-    color_eyre::install()?;
+async fn main() -> std::io::Result<()> {
+    env_logger::init();
 
-    let github_oidc_url = "https://token.actions.githubusercontent.com";
-    let jwks = Arc::new(RwLock::new(fetch_jwks(github_oidc_url).await?));
+    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+    let address = format!("0.0.0.0:{}", port);
+    
+    info!("Starting server at: {}", address);
 
-    if let Ok(org) = std::env::var("GITHUB_ORG") {
-        println!("GITHUB_ORG set to: {}", org);
-    }
-    if let Ok(repo) = std::env::var("GITHUB_REPO") {
-        println!("GITHUB_REPO set to: {}", repo);
-    }
-
-    println!("Starting OIDC server...");
-    HttpServer::new(move || {
+    HttpServer::new(|| {
         App::new()
-            .app_data(web::Data::new(AppState { jwks: jwks.clone() }))
-            .route("/", web::get().to(hello))
+            .route("/", web::get().to(|| HttpResponse::Ok().body("Hello from OIDC Service!")))
             .route("/token", web::post().to(token_endpoint))
+            .route("/health", web::get().to(health_check))
     })
-    .bind("localhost:3000")?
+    .bind(&address)?
     .run()
-    .await?;
-
-    Ok(())
+    .await
 }
