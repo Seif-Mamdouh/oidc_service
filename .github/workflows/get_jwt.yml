@@ -21,7 +21,7 @@ jobs:
 
       - name: Validate JWT
         env:
-          OIDC_SERVICE_URL: "http://your-oidc-service-url:3000/token"
+          OIDC_SERVICE_URL: ${{ secrets.OIDC_SERVICE_URL }}
         run: |
           TOKEN="${{ steps.get_token.outputs.token }}"
           RESPONSE=$(curl -s -X POST $OIDC_SERVICE_URL \
