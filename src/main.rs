@@ -68,9 +68,9 @@ async fn validate_github_token(
         DecodingKey::from_secret("your_secret_key".as_ref())
     };
 
-    let mut validation = Validation::new(Algorithm::RS256); 
-    validation.validate_exp = false; // Disable expiration validation for testing
-    validation.required_spec_claims.clear(); // disable all required claims
+    let mut validation = Validation::new(Algorithm::RS256);
+    
+    validation.set_audience(&["https://github.com/Seif-Mamdouh"]);
 
     let token_data = decode::<GitHubClaims>(token, &decoding_key, &validation)
         .map_err(|e| eyre!("Failed to decode token: {}", e))?;
@@ -114,7 +114,6 @@ async fn main() -> Result<()> {
         fetch_jwks(github_oidc_url).await?
     ));
 
-    // Read and log the GITHUB_ORG and GITHUB_REPO environment variables
     if let Ok(org) = std::env::var("GITHUB_ORG") {
         println!("GITHUB_ORG set to: {}", org);
     }
