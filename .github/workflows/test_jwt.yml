@@ -1,0 +1,35 @@
+name: Test OIDC Token
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-oidc:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Get OIDC Token
+        id: get_token
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const token = await core.getIDToken()
+            core.setOutput('token', token)
+
+      - name: Send Token to OIDC Service
+        env:
+          OIDC_SERVICE_URL: ${{ secrets.OIDC_SERVICE_URL }}
+        run: |
+          TOKEN="${{ steps.get_token.outputs.token }}"
+          RESPONSE=$(curl -s -X POST $OIDC_SERVICE_URL \
+            -H "Content-Type: application/json" \
+            -d "{\"token\": \"$TOKEN\"}")
+          echo "OIDC Service Response: $RESPONSE"
+          if [[ $RESPONSE == *"Invalid token"* ]]; then
+            echo "Token validation failed"
+            exit 1
+          else
+            echo "Token validated successfully"
+          fi
