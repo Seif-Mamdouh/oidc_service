@@ -7,7 +7,6 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use std::env;
-use log::{info, error};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct GitHubClaims {
@@ -106,24 +105,17 @@ async fn hello() -> impl Responder {
     "Hello, OIDC!"
 }
 
-async fn health_check() -> HttpResponse {
-    HttpResponse::Ok().body("OK")
-}
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();
-
-    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "3000".to_string());
     let address = format!("0.0.0.0:{}", port);
     
-    info!("Starting server at: {}", address);
+    println!("Starting server at: {}", address);
 
     HttpServer::new(|| {
         App::new()
-            .route("/", web::get().to(|| HttpResponse::Ok().body("Hello from OIDC Service!")))
+            .route("/", web::get().to(hello))
             .route("/token", web::post().to(token_endpoint))
-            .route("/health", web::get().to(health_check))
     })
     .bind(&address)?
     .run()
