@@ -2,7 +2,7 @@
 
 
 ## TL:DR
-- This program serves as a custom validation service for GitHub Actions OIDC tokens
+- This service serves as a custom validation service for GitHub Actions OIDC tokens
 - Allows users to have access control over Github's action infrastructure based on the contents of OIDC tokens.
 
 
@@ -23,15 +23,14 @@
 ## Test Plan
 - Clone repo
 - run `cargo watch -x run`
+- go the github actions tab and generate a JWT token from `Get and Validate JWT` workflow
+- you will find a JWT token under artifacts, click to download
 - run
   -   ```
-      curl -X POST -H "Content-Type: application/json" -d '{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJuYW1lIjoiU2VpZiIsImlhdCI6MTUxNjIzOTAyMn0.Gm6ToPj0vZvlrlSVYZuFx0WetYbWlycX0Ia5QxPSoRY"}' http://localhost:3000/token
+      curl -X POST -H "Content-Type: application/json" -d '{"token":"your_generated_token"}' http://localhost:3000/token
       ```
 ## Expected Ouput:
 
 ```
-{"sub":"123","name":"Seif","iat":1516239022}
+{ sub: "repo:Seif-Mamdouh/oidc_service:ref:refs/heads/main", repository: "Seif-Mamdouh/oidc_service", repository_owner: "Seif-Mamdouh", job_workflow_ref: "Seif-Mamdouh/oidc_service/.github/workflows/test_jwt.yml@refs/heads/main", iat: 1724872875 }
 ```
-
-
-I got my JWT test token from: https://jwt.io/#debugger-io?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJuYW1lIjoiU2VpZiIsImlhdCI6MTUxNjIzOTAyMn0.Gm6ToPj0vZvlrlSVYZuFx0WetYbWlycX0Ia5QxPSoRYs
