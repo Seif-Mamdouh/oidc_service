@@ -89,12 +89,15 @@ async fn validate_github_token(token: &str, jwks: Arc<RwLock<Value>>) -> Result<
 
     if let Ok(org) = std::env::var("GITHUB_ORG") {
         if claims.repository_owner != org {
+            warn!("Token organization mismatch. Expected: {}, Found: {}", org, claims.repository_owner);
             return Err(eyre!("Token is not from the expected organization"));
         }
     }
 
     if let Ok(repo) = std::env::var("GITHUB_REPO") {
+        debug!("Comparing repositories - Expected: {}, Found: {}", repo, claims.repository);
         if claims.repository != repo {
+            warn!("Token repository mismatch. Expected: {}, Found: {}", repo, claims.repository);
             return Err(eyre!("Token is not from the expected repository"));
         }
     }
