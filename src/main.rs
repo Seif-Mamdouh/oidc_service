@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use log::{error, info, warn, debug};
+use env_logger::Env;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct GitHubClaims {
@@ -29,21 +31,28 @@ async fn token_endpoint(
     token_request: web::Json<TokenRequest>,
     data: web::Data<AppState>,
 ) -> impl Responder {
+    debug!("Received token validation request");
     match validate_github_token(&token_request.token, data.jwks.clone()).await {
-        Ok(claims) => HttpResponse::Ok().json(claims),
+        Ok(claims) => {
+            info!("Token validated successfully");
+            HttpResponse::Ok().json(claims)
+        }
         Err(e) => {
-            eprintln!("Token validation error: {:?}", e);
+            error!("Token validation error: {:?}", e);
             HttpResponse::BadRequest().body(format!("Invalid token: {}", e))
         }
     }
 }
 
 async fn validate_github_token(token: &str, jwks: Arc<RwLock<Value>>) -> Result<GitHubClaims> {
+    debug!("Starting token validation");
     if !token.starts_with("eyJ") {
+        warn!("Invalid token format received");
         return Err(eyre!("Invalid token format. Expected a JWT."));
     }
 
     let jwks = jwks.read().await;
+    debug!("JWKS loaded");
 
     let header = jsonwebtoken::decode_header(token).map_err(|e| {
         eyre!(
@@ -90,14 +99,32 @@ async fn validate_github_token(token: &str, jwks: Arc<RwLock<Value>>) -> Result<
         }
     }
 
+    debug!("Token validation completed successfully");
     Ok(claims)
 }
 
 async fn fetch_jwks(oidc_url: &str) -> Result<Value> {
+    info!("Fetching JWKS from {}", oidc_url);
     let client = reqwest::Client::new();
     let jwks_url = format!("{}/.well-known/jwks", oidc_url);
-    let jwks = client.get(&jwks_url).send().await?.json().await?;
-    Ok(jwks)
+    match client.get(&jwks_url).send().await {
+        Ok(response) => {
+            match response.json().await {
+                Ok(jwks) => {
+                    info!("JWKS fetched successfully");
+                    Ok(jwks)
+                }
+                Err(e) => {
+                    error!("Failed to parse JWKS response: {:?}", e);
+                    Err(eyre!("Failed to parse JWKS"))
+                }
+            }
+        }
+        Err(e) => {
+            error!("Failed to fetch JWKS: {:?}", e);
+            Err(eyre!("Failed to fetch JWKS"))
+        }
+    }
 }
 
 async fn hello() -> impl Responder {
@@ -106,26 +133,28 @@ async fn hello() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> Result<()> {
+    env_logger::init_from_env(Env::default().default_filter_or("debug"));
     color_eyre::install()?;
+
+    info!("Starting OIDC server...");
 
     let github_oidc_url = "https://token.actions.githubusercontent.com";
     let jwks = Arc::new(RwLock::new(fetch_jwks(github_oidc_url).await?));
 
     if let Ok(org) = std::env::var("GITHUB_ORG") {
-        println!("GITHUB_ORG set to: {}", org);
+        info!("GITHUB_ORG set to: {}", org);
     }
     if let Ok(repo) = std::env::var("GITHUB_REPO") {
-        println!("GITHUB_REPO set to: {}", repo);
+        info!("GITHUB_REPO set to: {}", repo);
     }
 
-    println!("Starting OIDC server...");
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(AppState { jwks: jwks.clone() }))
             .route("/", web::get().to(hello))
             .route("/token", web::post().to(token_endpoint))
     })
-    .bind("localhost:3000")?
+    .bind("0.0.0.0:3000")?
     .run()
     .await?;
 
