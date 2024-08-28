@@ -19,18 +19,18 @@
   - Performs the actual token validation, including:
     - Checking token format
     - Decoding the token header
-    - Finding the appropriate key in the JWKS
+    - Finding the appropriate key in the `JWKS`
     - Decoding and validating the token
     - Checking organization and repository claims against environment variables
 - `fetch_jwks` function:
-  - Fetches the JWKS from GitHub's OIDC provider URL.
+  - Fetches the `JWKS` from GitHub's OIDC provider URL.
 - `hello` function:
-  - A simple handler for the root path ("/"), returning "Hello, OIDC!".
+  - A simple handler for the root path `/`, returning `Hello, OIDC!`.
 - `main` function:
   - Initializes logging and error handling
-  - Fetches the initial JWKS
-  - Sets up the HTTP server with routes for "/" and "/token"
-  - Starts the server on port 3000
+  - Fetches the initial `JWKS`
+  - Sets up the HTTP server with routes for `/` and `/token`
+  - Starts the server on `port 3000`
 
  ## Use case Scanrio
  - GitHub Actions workflow would generate an OIDC token. 
@@ -38,6 +38,8 @@
  - Our system verifies the token and returns the decoded claims if it's valid.
 
 ## Test Plan
+
+### Local testing
 - Clone repo
 - run `cargo watch -x run`
 - go the github actions tab and generate a JWT token from `Get and Validate JWT` workflow
@@ -46,8 +48,15 @@
   -   ```
       curl -X POST -H "Content-Type: application/json" -d '{"token":"your_generated_token"}' http://localhost:3000/token
       ```
-## Expected Ouput:
+### Expected Ouput:
 
 ```
 { sub: "repo:Seif-Mamdouh/oidc_service:ref:refs/heads/main", repository: "Seif-Mamdouh/oidc_service", repository_owner: "Seif-Mamdouh", job_workflow_ref: "Seif-Mamdouh/oidc_service/.github/workflows/test_jwt.yml@refs/heads/main", iat: 1724872875 }
 ```
+
+### Prod Testing
+- go to github action and run Get and Validate JWT workflow action on main branch
+
+### Expected output:
+<img width="789" alt="Screenshot 2024-08-28 at 4 16 15 PM" src="https://github.com/user-attachments/assets/02191c54-e77e-4742-80fd-cf20cfabd993">
+
