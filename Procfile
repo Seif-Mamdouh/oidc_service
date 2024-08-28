@@ -1,1 +1,1 @@
-web: cargo build --release && ./target/release/oidc-service 
+web: cargo build --release && ./target/release/oidc-service

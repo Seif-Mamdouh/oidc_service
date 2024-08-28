@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use std::env;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct GitHubClaims {
@@ -106,18 +105,29 @@ async fn hello() -> impl Responder {
 }
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    let port = env::var("PORT").unwrap_or_else(|_| "3000".to_string());
-    let address = format!("0.0.0.0:{}", port);
-    
-    println!("Starting server at: {}", address);
+async fn main() -> Result<()> {
+    color_eyre::install()?;
 
-    HttpServer::new(|| {
+    let github_oidc_url = "https://token.actions.githubusercontent.com";
+    let jwks = Arc::new(RwLock::new(fetch_jwks(github_oidc_url).await?));
+
+    if let Ok(org) = std::env::var("GITHUB_ORG") {
+        println!("GITHUB_ORG set to: {}", org);
+    }
+    if let Ok(repo) = std::env::var("GITHUB_REPO") {
+        println!("GITHUB_REPO set to: {}", repo);
+    }
+
+    println!("Starting OIDC server...");
+    HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(AppState { jwks: jwks.clone() }))
             .route("/", web::get().to(hello))
             .route("/token", web::post().to(token_endpoint))
     })
-    .bind(&address)?
+    .bind("localhost:3000")?
     .run()
-    .await
+    .await?;
+
+    Ok(())
 }
