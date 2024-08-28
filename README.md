@@ -1,4 +1,4 @@
-# Mock Custom OIDC with Github
+# Mock Custom OIDC token claims with Github
 
 
 ## TL:DR
