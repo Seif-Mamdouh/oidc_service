@@ -1155,6 +1155,7 @@ dependencies = [
  "env_logger",
  "fmt",
  "jsonwebtoken",
+ "log",
  "reqwest",
  "serde",
  "serde_json",
