@@ -7,13 +7,30 @@
 
 
 ## Main components
-- fn `token_endpoint`: `POST` requests to `/token`, extracts the token from the request, and validates it.
-- fn `validate_github_token`: does the actual work of validating the token, including checking its format, decoding it, and verifying its signature.
-- fn `fetch_jwks`: fetches the JSON Web Key Set (JWKS) from GitHub's OIDC provider, which is used for validating tokens in a production environment.
-- `HttpServer` (inside of main fn) : This sets up an Actix web server running on `localhost:3000` with two routes: 
-  - a GET "/" for a simple hello message.
-  - a POST `/token` for token validation.
-
+- `GitHubClaims` struct:
+  - Defines the structure for GitHub OIDC token claims, including repository, owner, and workflow information.
+- `AppState` struct:
+  - Holds the shared application state, containing a thread-safe reference to the JWKS (JSON Web Key Set).
+- `TokenRequest` struct:
+  - Represents the incoming token validation request, containing a single token field.
+- `token_endpoint` function:
+  - Handles POST requests to /token, validating the provided GitHub token and returning the claims if valid.
+- `validate_github_token` function:
+  - Performs the actual token validation, including:
+    - Checking token format
+    - Decoding the token header
+    - Finding the appropriate key in the JWKS
+    - Decoding and validating the token
+    - Checking organization and repository claims against environment variables
+- `fetch_jwks` function:
+  - Fetches the JWKS from GitHub's OIDC provider URL.
+- `hello` function:
+  - A simple handler for the root path ("/"), returning "Hello, OIDC!".
+- `main` function:
+  - Initializes logging and error handling
+  - Fetches the initial JWKS
+  - Sets up the HTTP server with routes for "/" and "/token"
+  - Starts the server on port 3000
 
  ## Use case Scanrio
  - GitHub Actions workflow would generate an OIDC token. 
