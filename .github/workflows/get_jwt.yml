@@ -28,9 +28,17 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"token\": \"$TOKEN\"}")
           echo "OIDC Service Response: $RESPONSE"
+          
           if [[ $RESPONSE == *"Invalid token"* ]]; then
-            echo "Token validation failed"
+            echo "::error::Token validation failed: $RESPONSE"
+            exit 1
+          elif [[ $RESPONSE == *"error"* ]]; then
+            echo "::warning::Unexpected error occurred: $RESPONSE"
+            exit 1
+          elif [[ -z "$RESPONSE" ]]; then
+            echo "::error::Empty response from OIDC service"
             exit 1
           else
-            echo "Token validated successfully"
+            echo "::notice::Token validated successfully"
+            echo "$RESPONSE" | jq .
           fi
