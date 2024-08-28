@@ -19,7 +19,7 @@
 - `TokenRequest` struct:
   - Represents the incoming token validation request, containing a single token field.
 - `token_endpoint` function:
-  - Handles POST requests to /token, validating the provided GitHub token and returning the claims if valid.
+  - Handles POST requests to `/token`, validating the provided GitHub token and returning the claims if valid.
 - `validate_github_token` function:
   - Performs the actual token validation, including:
     - Checking token format
