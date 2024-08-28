@@ -4,6 +4,7 @@
 ## TL:DR
 - This service serves as a custom validation service for GitHub Actions OIDC tokens
 - Allows users to have access control over Github's action infrastructure based on the contents of OIDC tokens.
+- Service is deployed to [railsway.app](https://railway.app/project/a9d3b2d2-1866-4d35-a803-a54edcef2ca9/service/6711e96e-a059-456e-af4a-7f316736785d) 
 
 
 ## Main components
