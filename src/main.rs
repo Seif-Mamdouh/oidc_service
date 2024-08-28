@@ -132,7 +132,7 @@ async fn fetch_jwks(oidc_url: &str) -> Result<Value> {
 
 async fn hello() -> impl Responder {
     "Hello, OIDC!"
-}
+}       
 
 #[actix_web::main]
 async fn main() -> Result<()> {
