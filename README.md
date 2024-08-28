@@ -6,6 +6,10 @@
 - Allows users to have access control over Github's action infrastructure based on the contents of OIDC tokens.
 - Service is deployed to [railsway.app](https://railway.app/project/a9d3b2d2-1866-4d35-a803-a54edcef2ca9/service/6711e96e-a059-456e-af4a-7f316736785d) 
 
+ ## Use case Scanrio
+ - GitHub Actions workflow would generate an OIDC token. 
+ - This token can then be sent to our system for validation. 
+ - Our system verifies the token and returns the decoded claims if it's valid.
 
 ## Main components
 - `GitHubClaims` struct:
@@ -32,11 +36,6 @@
   - Fetches the initial `JWKS`
   - Sets up the HTTP server with routes for `/` and `/token`
   - Starts the server on `port 3000`
-
- ## Use case Scanrio
- - GitHub Actions workflow would generate an OIDC token. 
- - This token can then be sent to our system for validation. 
- - Our system verifies the token and returns the decoded claims if it's valid.
 
 ## Test Plan
 
